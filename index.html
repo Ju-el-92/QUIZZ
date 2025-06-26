@@ -447,7 +447,6 @@
 
         const startScreen = document.getElementById("start-screen");
         const quizContainer = document.getElementById("quiz-container");
-        // const startButton = document.getElementById("start-button"); // Cette ligne a été déplacée
 
         function startQuiz() {
             currentQuestionIndex = 0;
@@ -465,15 +464,30 @@
                     <div class="question-title">Question ${currentQuestionIndex + 1}/${questions.length}</div>
                     <div class="question-text">${current.q}</div>
                     ${current.options.map((opt, i) => `
-                        <button class="option" onclick="selectAnswer(${i})">
+                        <button class="option" data-option-index="${i}">
                             ${opt}
                         </button>
                     `).join("")}
                 </div>
+                <div class="feedback-block hidden" id="current-feedback-block">
+                    <p><strong id="feedback-text"></strong></p>
+                    <button id="next-question-btn">Suivant</button>
+                </div>
             `;
+
+            // Attacher les écouteurs d'événements APRÈS que les éléments soient créés
+            const optionsButtons = quizContainer.querySelectorAll(".option");
+            optionsButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    selectAnswer(parseInt(this.dataset.optionIndex), this);
+                });
+            });
+
+            // Gérer le bouton suivant séparément
+            document.getElementById("next-question-btn").addEventListener('click', nextQuestion);
         }
 
-        function selectAnswer(selectedIndex) {
+        function selectAnswer(selectedIndex, clickedButton) {
             const current = questions[currentQuestionIndex];
             const isCorrect = selectedIndex === current.answer;
             if (isCorrect) score += 3;
@@ -486,22 +500,21 @@
             });
 
             const optionsButtons = quizContainer.querySelectorAll(".option");
-            optionsButtons.forEach((button, i) => {
-                button.onclick = null;
-                if (i === current.answer) {
+            optionsButtons.forEach(button => {
+                button.removeEventListener('click', arguments.callee); // Supprime l'écouteur pour éviter plusieurs clics
+                button.style.pointerEvents = 'none'; // Désactive le bouton visuellement
+                const optionIndex = parseInt(button.dataset.optionIndex);
+                if (optionIndex === current.answer) {
                     button.classList.add("correct");
-                } else if (i === selectedIndex) {
+                } else if (optionIndex === selectedIndex) {
                     button.classList.add("incorrect");
                 }
-                button.style.pointerEvents = 'none';
             });
 
-            quizContainer.innerHTML += `
-                <div class="feedback-block">
-                    <p><strong>💡 Feedback :</strong> ${current.feedback}</p>
-                    <button onclick="nextQuestion()">Suivant</button>
-                </div>
-            `;
+            // Afficher le feedback et le bouton "Suivant"
+            const feedbackBlock = document.getElementById("current-feedback-block");
+            document.getElementById("feedback-text").textContent = `💡 Feedback : ${current.feedback}`;
+            feedbackBlock.classList.remove("hidden");
         }
 
         function nextQuestion() {
@@ -534,9 +547,12 @@
                             Accéder aux annales
                         </a></p>
                     </div>
-                    <button onclick="startQuiz()">Recommencer</button>
+                    <button id="restart-quiz-btn">Recommencer</button>
                 </div>
             `;
+
+            // Attacher l'écouteur d'événement pour le bouton "Recommencer"
+            document.getElementById("restart-quiz-btn").addEventListener('click', startQuiz);
 
             const now = new Date();
             const timestamp = now.toLocaleString('fr-FR', {
@@ -588,13 +604,10 @@
             });
         }
 
-        // Le code d'initialisation a été déplacé à l'intérieur d'un écouteur DOMContentLoaded.
-        // Cela garantit que tous les éléments HTML sont chargés et disponibles.
         document.addEventListener("DOMContentLoaded", function() {
-            // Déclarez startButton ICI, car nous sommes sûrs que l'élément HTML existe à ce stade.
             const startButton = document.getElementById("start-button");
             startButton.addEventListener("click", startQuiz);
-            quizContainer.classList.add("hidden"); // Assurez-vous que le conteneur du quiz est caché au départ
+            quizContainer.classList.add("hidden");
         });
     </script>
 </body>
