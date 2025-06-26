@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Quizz VTC</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            color: #0C2C1C; /* Main body text color */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top to prevent weird centering on small content */
+            min-height: 100vh; /* Ensure it takes full viewport height */
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+            margin: 20px auto; /* Add margin-top for some spacing */
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center; /* Center content by default */
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Buttons */
+        button {
+            background-color: #2A9C64;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 15px; /* Added margin for spacing */
+        }
+
+        button:hover {
+            background-color: #228753;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Options for quiz questions */
+        .option {
+            display: block; /* Each option on its own line */
+            width: calc(100% - 24px); /* Full width minus padding */
+            margin: 12px auto; /* Centered with vertical spacing */
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #fafafa;
+            text-align: left; /* Align text within option button */
+            font-size: 1.1em;
+            color: #333; /* Dark gray text for options */
+            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .option:hover {
+            background-color: #2A9C64; /* Green on hover */
+            border-color: #2A9C64;
+            color: white; /* White text on green hover */
+            transform: translateY(-2px);
+        }
+
+        /* Correct and Incorrect answer styling */
+        .option.correct {
+            background-color: #2A9C64; /* Green for correct */
+            border-color: #2A9C64;
+            color: white; /* White text for correct */
+        }
+
+        .option.incorrect {
+            background-color: #e74c3c; /* Red for incorrect */
+            border-color: #e74c3c;
+            color: white; /* White text for incorrect */
+        }
+
+        /* Feedback styling */
+        .feedback-block {
+            margin-top: 25px;
+            background: #e8f5e9;
+            padding: 15px;
+            border-left: 5px solid #2A9C64;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 1em;
+            color: #0C2C1C;
+        }
+
+        .feedback-block p {
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Question specific styles */
+        .question-block {
+            margin-bottom: 30px;
+        }
+
+        .question-title {
+            font-size: 1.5em;
+            color: #2A9C64;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .question-text {
+            font-size: 1.2em;
+            margin-bottom: 25px;
+            line-height: 1.6;
+            color: #333; /* Dark gray text for question */
+        }
+
+        /* Result screen styles */
+        .result {
+            padding: 20px 0;
+        }
+
+        .result h2 {
+            font-size: 2.5em;
+            color: #2A9C64;
+            margin-bottom: 20px;
+        }
+
+        .score {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #0C2C1C;
+            margin-bottom: 15px;
+        }
+
+        .score-message {
+            font-size: 1.3em;
+            color: #555;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .link-block {
+            background: #f0f8f0;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #d6e9d6;
+            margin-bottom: 25px;
+        }
+
+        .link-block p {
+            margin: 0;
+            font-size: 1em;
+            color: #333;
+        }
+
+        a {
+            color: #2A9C64;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+                color: #1a7a4f;
+            text-decoration: underline;
+        }
+
+        /* Start screen specific style */
+        #start-screen {
+            padding: 20px 0;
+        }
+        #start-screen h1 {
+            font-size: 2.8em;
+            margin-bottom: 20px;
+            color: #2A9C64;
+        }
+        #start-screen p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            .question-title {
+                font-size: 1.3em;
+            }
+            .question-text {
+                font-size: 1em;
+            }
+            .option {
+                padding: 12px;
+                font-size: 1em;
+            }
+            .feedback-block {
+                font-size: 0.9em;
+            }
+            .result h2 {
+                font-size: 2em;
+            }
+            .score {
+                font-size: 1.8em;
+            }
+            .score-message {
+                font-size: 1.1em;
+            }
+            #start-screen h1 {
+                font-size: 2.2em;
+            }
+            #start-screen p {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="start-screen">
+            <h1>🎓 Quizz VTC</h1>
+            <p>Ce quizz est basé sur les contenus abordés lors des formations officielles VTC. Il reprend les matières « Relation client et attitudes professionnelles » et « Réglementation VTC ».</p>
+            <button id="start-button">Démarrer le Quizz</button>
+        </div>
+
+        <div id="quiz-container">
+            </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                q: "Quel habitacle les passagers apprécient-ils le plus ?",
+                options: [
+                    "Un véhicule parfaitement propre, sans aucune odeur.",
+                    "Une voiture parfumée avec beaucoup de décoration.",
+                    "Une voiture personnelle avec objets visibles du chauffeur."
+                ],
+                answer: 0,
+                feedback: "Les passagers apprécient généralement plus un espace neutre, impeccable et sans odeur marquée."
+            },
+            {
+                q: "À quelle fréquence vérifier la propreté du véhicule ?",
+                options: [
+                    "Quotidiennement avant le début des courses.",
+                    "Seulement quand le client se plaint.",
+                    "Une fois par mois."
+                ],
+                answer: 0,
+                feedback: "Une vérification quotidienne contribue à une bonne première impression."
+            },
+            {
+                q: "Quelle approche adopter concernant la conversation avec les passagers ?",
+                options: [
+                    "Parler uniquement si le passager engage la conversation.",
+                    "Toujours parler pour éviter le silence.",
+                    "Ne jamais parler pendant le trajet."
+                ],
+                answer: 0,
+                feedback: "Beaucoup de passagers préfèrent initier eux-mêmes l’échange."
+            },
+            {
+                q: "Quel comportement est perçu comme professionnel ?",
+                options: [
+                    "Maintenir un ton respectueux et calme.",
+                    "Donner systématiquement son avis personnel.",
+                    "Imposer une ambiance festive."
+                ],
+                answer: 0,
+                feedback: "Un ton neutre et calme rassure le passager."
+            },
+            {
+                q: "Que faire en cas de retard imprévu ?",
+                options: [
+                    "Prévenir immédiatement via l'application ou message.",
+                    "Ne rien dire pour ne pas inquiéter.",
+                    "Attendre d’être arrivé pour s’excuser."
+                ],
+                answer: 0,
+                feedback: "Prévenir du retard peut renforcer la qualité perçue du service."
+            },
+            {
+                q: "Comment réagir si le passager est en retard ?",
+                options: [
+                    "Patienter quelques minutes avant d’appeler.",
+                    "Klaxonner immédiatement.",
+                    "Quitter les lieux après 1 minute."
+                ],
+                answer: 0,
+                feedback: "La discrétion et la patience sont valorisées."
+            },
+            {
+                q: "Quand proposer de l’aide avec les bagages ?",
+                options: [
+                    "Observer la situation et proposer si besoin.",
+                    "Ne jamais proposer son aide.",
+                    "Imposer directement son aide sans demander."
+                ],
+                answer: 0,
+                feedback: "Une aide discrète et opportune est la mieux perçue."
+            },
+            {
+                q: "Quelle petite attention est particulièrement appréciée ?",
+                options: [
+                    "Rappeler au passager de vérifier ses effets personnels.",
+                    "Offrir systématiquement des brochures touristiques.",
+                    "Parler politique avec le passager."
+                ],
+                answer: 0,
+                feedback: "Rappeler au passager ses effets personnels montre attention et professionnalisme."
+            },
+            {
+                q: "Quel style de conduite les passagers préfèrent-ils ?",
+                options: [
+                    "Fluide et strictement respectueux du code.",
+                    "Rapide pour gagner du temps.",
+                    "Dynamique avec dépassements fréquents."
+                ],
+                answer: 0,
+                feedback: "Une conduite fluide et rassurante est prioritaire."
+            },
+            {
+                q: "Quelle est l’attitude recommandée concernant les appels téléphoniques ?",
+                options: [
+                    "Éviter les appels durant la course.",
+                    "Téléphoner régulièrement pendant la course en utilisant le kit mains-libres.",
+                    "Expliquer au passager l’importance de l’appel."
+                ],
+                answer: 0,
+                feedback: "Ne pas passer d'appels contribue à une atmosphère calme et professionnelle."
+            },
+            {
+                q: "Quelle gestion de la musique privilégier ?",
+                options: [
+                    "Demander au passager s’il souhaite écouter quelque chose.",
+                    "Imposer ses propres goûts musicaux.",
+                    "Laisser une musique forte pour dynamiser le trajet."
+                ],
+                answer: 0,
+                feedback: "Une proposition personnalisée montre votre souci du confort passager."
+            },
+            {
+                q: "Comment gérer la température du véhicule ?",
+                options: [
+                    "Demander l’avis du passager sur la température.",
+                    "Garder systématiquement la climatisation forte.",
+                    "Ouvrir les fenêtres par défaut."
+                ],
+                answer: 0,
+                feedback: "Un ajustement selon les préférences passager est apprécié."
+            },
+            {
+                q: "Quelle tenue vestimentaire privilégier ?",
+                options: [
+                    "Une tenue sobre, propre et adaptée à la saison.",
+                    "Une tenue sportive décontractée.",
+                    "Une tenue élégante de soirée."
+                ],
+                answer: 0,
+                feedback: "Une tenue simple, propre et professionnelle est valorisée par les passagers."
+            },
+            {
+                q: "Quelle attitude adopter face à un passager mécontent ?",
+                options: [
+                    "Écouter calmement et proposer une solution adaptée.",
+                    "Ignorer complètement ses remarques.",
+                    "Répondre agressivement pour montrer son désaccord."
+                ],
+                answer: 0,
+                feedback: "Une écoute active et la proposition d'une solution calme le passager et améliore l'expérience."
+            },
+            {
+                q: "En cas d'objet oublié par un passager, quelle est la bonne pratique à suivre ?",
+                options: [
+                    "Contacter immédiatement le passager ou la plateforme concernée.",
+                    "Conserver l’objet sans le signaler.",
+                    "Jeter l’objet après 24 heures."
+                ],
+                answer: 0,
+                feedback: "La réactivité et l'honnêteté renforcent votre professionnalisme."
+            },
+            {
+                q: "Comment accueillir idéalement un passager à bord ?",
+                options: [
+                    "Saluer poliment et vérifier l’identité du passager.",
+                    "Ne rien dire pour éviter tout malentendu.",
+                    "Laisser le passager monter sans interaction."
+                ],
+                answer: 0,
+                feedback: "Une salutation polie et une vérification discrète assurent un accueil rassurant et professionnel."
+            },
+            {
+                q: "Quelle attitude adopter en cas de désaccord sur le trajet choisi par le passager ?",
+                options: [
+                    "Expliquer calmement les alternatives tout en respectant sa décision finale.",
+                    "Imposer votre itinéraire systématiquement.",
+                    "Refuser le trajet immédiatement."
+                ],
+                answer: 0,
+                feedback: "Une attitude conciliante et informative valorise votre professionnalisme."
+            },
+            {
+                q: "Quelle est la meilleure pratique en cas de demande spécifique d’un passager (musique, itinéraire précis, arrêt rapide) ?",
+                options: [
+                    "S’adapter à la demande si elle est raisonnable et possible.",
+                    "Ignorer les demandes spécifiques.",
+                    "Faire systématiquement payer plus cher."
+                ],
+                answer: 0,
+                feedback: "La flexibilité face aux demandes raisonnables améliore considérablement l'expérience client."
+            },
+            {
+                q: "Comment réagir si un passager utilise un langage ou un comportement inapproprié ?",
+                options: [
+                    "Garder son calme et rappeler poliment les règles de bienséance.",
+                    "Répondre agressivement pour montrer son autorité.",
+                    "Ignorer totalement le comportement."
+                ],
+                answer: 0,
+                feedback: "Maintenir son calme tout en rappelant poliment les règles contribue à désamorcer la situation."
+            },
+            {
+                q: "Quelle réaction adopter en cas d’incident léger pendant le trajet (petit accident matériel sans gravité) ?",
+                options: [
+                    "Informer calmement le passager et prendre les dispositions nécessaires pour assurer sa sécurité.",
+                    "Ignorer l’incident pour éviter d’inquiéter le passager.",
+                    "Exiger que le passager descende immédiatement."
+                ],
+                answer: 0,
+                feedback: "Une gestion calme et sécurisante rassure le passager et confirme votre professionnalisme."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = [];
+
+        const startScreen = document.getElementById("start-screen");
+        const quizContainer = document.getElementById("quiz-container");
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = [];
+            startScreen.classList.add("hidden");
+            quizContainer.classList.remove("hidden");
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const current = questions[currentQuestionIndex];
+            quizContainer.innerHTML = `
+                <div class="question-block">
+                    <div class="question-title">Question ${currentQuestionIndex + 1}/${questions.length}</div>
+                    <div class="question-text">${current.q}</div>
+                    ${current.options.map((opt, i) => `
+                        <button class="option" onclick="selectAnswer(${i})">
+                            ${opt}
+                        </button>
+                    `).join("")}
+                </div>
+            `;
+        }
+
+        function selectAnswer(selectedIndex) {
+            const current = questions[currentQuestionIndex];
+            const isCorrect = selectedIndex === current.answer;
+            if (isCorrect) score += 3;
+            userAnswers.push({
+                question: current.q,
+                selected: current.options[selectedIndex],
+                correct: current.options[current.answer],
+                isCorrect: isCorrect, // Ensure this is explicitly true/false
+                feedback: current.feedback
+            });
+
+            // Visually mark selected answer
+            const optionsButtons = quizContainer.querySelectorAll(".option");
+            optionsButtons.forEach((button, i) => {
+                button.onclick = null; // Disable further clicks
+                if (i === current.answer) {
+                    button.classList.add("correct");
+                } else if (i === selectedIndex) {
+                    button.classList.add("incorrect");
+                }
+                // Also remove hover effect after selection
+                button.style.pointerEvents = 'none'; // Makes the button unclickable and removes hover state
+            });
+
+            // Show feedback after selection
+            quizContainer.innerHTML += `
+                <div class="feedback-block">
+                    <p><strong>💡 Feedback :</strong> ${current.feedback}</p>
+                    <button onclick="nextQuestion()">Suivant</button>
+                </div>
+            `;
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function getScoreMessage(score) {
+            if (score >= 54) return "🏆 Excellent ! Vous maîtrisez parfaitement les bonnes pratiques VTC.";
+            if (score >= 48) return "🥇 Très bien ! Vous avez une bonne compréhension des standards professionnels.";
+            if (score >= 42) return "🥈 Bien ! Quelques points à revoir pour parfaire votre approche.";
+            if (score >= 36) return "🥉 Correct, mais il serait bénéfique de réviser certains aspects.";
+            return "📚 Il est recommandé de reprendre la formation pour mieux assimiler les bonnes pratiques.";
+        }
+
+        function showResults() {
+            const message = getScoreMessage(score);
+            quizContainer.innerHTML = `
+                <div class="result">
+                    <h2>🎉 Résultats</h2>
+                    <p class="score">${score}/60</p>
+                    <p class="score-message">${message}</p>
+                    <div class="link-block">
+                        <p>👉 Consultez les annales officielles :<br>
+                        <a href="https://www.artisanat.fr/nous-connaitre/vous-accompagner/examens-taxi-vtc-vmdtr" target="_blank">
+                            Accéder aux annales
+                        </a></p>
+                    </div>
+                    <button onclick="startQuiz()">Recommencer</button>
+                </div>
+            `;
+
+            // Data to send to Zapier
+            const zapierData = {
+                score: score,
+                message: message,
+                // Convertir l'array userAnswers en chaîne JSON pour l'envoyer comme un seul champ
+                answers: JSON.stringify(userAnswers)
+            };
+
+            // Convertir l'objet en format URL-encoded
+            // Pour chaque clé-valeur dans zapierData, on l'encode et on la joint avec '&'
+            const formBody = Object.keys(zapierData).map(key =>
+                encodeURIComponent(key) + '=' + encodeURIComponent(zapierData[key])
+            ).join('&');
+
+
+            // Webhook Zapier
+            fetch("https://hooks.zapier.com/hooks/catch/13692872/ubdr3ly/", {
+                method: "POST",
+                headers: {
+                    // C'est le changement clé pour le format URL-encoded !
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                    // Le header 'Accept' n'est pas nécessaire pour ce format, mais peut être gardé.
+                },
+                body: formBody, // Utiliser le corps formaté
+            })
+            .then(response => {
+                // Lire la réponse comme du texte car Zapier peut ne pas retourner du JSON pour ce type de requête
+                return response.text();
+            })
+            .then(text => {
+                console.log('Réponse de Zapier reçue (texte):', text);
+                try {
+                    // Tenter de parser comme JSON si possible, sinon juste logger le texte
+                    const data = JSON.parse(text);
+                    if (data.status === "success") {
+                        console.log("Zapier a bien reçu les données !");
+                    }
+                } catch (e) {
+                    console.warn('Zapier n\'a pas retourné du JSON, ou erreur de parsing. Texte:', text, 'Erreur:', e);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'envoi des données à Zapier:', error);
+            });
+        }
+
+        // Initial launch - event listener for the start button
+        document.getElementById("start-button").addEventListener("click", startQuiz);
+
+        // Hide quizContainer initially since the start screen is visible
+        quizContainer.classList.add("hidden");
+    </script>
+</body>
+</html>
