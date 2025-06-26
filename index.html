@@ -6,36 +6,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* Base styles */
+        /* Styles CSS inchangés */
         body {
             font-family: 'Montserrat', sans-serif;
             background: #f4f4f4;
             margin: 0;
             padding: 20px;
-            color: #0C2C1C; /* Main body text color */
+            color: #0C2C1C;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Align to top to prevent weird centering on small content */
-            min-height: 100vh; /* Ensure it takes full viewport height */
+            align-items: flex-start;
+            min-height: 100vh;
             box-sizing: border-box;
         }
 
         .container {
             max-width: 700px;
             width: 100%;
-            margin: 20px auto; /* Add margin-top for some spacing */
+            margin: 20px auto;
             background: white;
             padding: 30px;
             border-radius: 16px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            text-align: center; /* Center content by default */
+            text-align: center;
         }
 
         .hidden {
             display: none;
         }
 
-        /* Buttons */
         button {
             background-color: #2A9C64;
             color: white;
@@ -45,7 +44,7 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-top: 15px; /* Added margin for spacing */
+            margin-top: 15px;
         }
 
         button:hover {
@@ -57,43 +56,40 @@
             transform: translateY(0);
         }
 
-        /* Options for quiz questions */
         .option {
-            display: block; /* Each option on its own line */
-            width: calc(100% - 24px); /* Full width minus padding */
-            margin: 12px auto; /* Centered with vertical spacing */
+            display: block;
+            width: calc(100% - 24px);
+            margin: 12px auto;
             padding: 15px;
             border: 2px solid #ddd;
             border-radius: 8px;
             cursor: pointer;
             background: #fafafa;
-            text-align: left; /* Align text within option button */
+            text-align: left;
             font-size: 1.1em;
-            color: #333; /* Dark gray text for options */
+            color: #333;
             transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
         }
 
         .option:hover {
-            background-color: #2A9C64; /* Green on hover */
+            background-color: #2A9C64;
             border-color: #2A9C64;
-            color: white; /* White text on green hover */
+            color: white;
             transform: translateY(-2px);
         }
 
-        /* Correct and Incorrect answer styling */
         .option.correct {
-            background-color: #2A9C64; /* Green for correct */
+            background-color: #2A9C64;
             border-color: #2A9C64;
-            color: white; /* White text for correct */
+            color: white;
         }
 
         .option.incorrect {
-            background-color: #e74c3c; /* Red for incorrect */
+            background-color: #e74c3c;
             border-color: #e74c3c;
-            color: white; /* White text for incorrect */
+            color: white;
         }
 
-        /* Feedback styling */
         .feedback-block {
             margin-top: 25px;
             background: #e8f5e9;
@@ -110,7 +106,6 @@
             line-height: 1.5;
         }
 
-        /* Question specific styles */
         .question-block {
             margin-bottom: 30px;
         }
@@ -126,10 +121,9 @@
             font-size: 1.2em;
             margin-bottom: 25px;
             line-height: 1.6;
-            color: #333; /* Dark gray text for question */
+            color: #333;
         }
 
-        /* Result screen styles */
         .result {
             padding: 20px 0;
         }
@@ -180,7 +174,6 @@
             text-decoration: underline;
         }
 
-        /* Start screen specific style */
         #start-screen {
             padding: 20px 0;
         }
@@ -196,7 +189,6 @@
             color: #333;
         }
 
-        /* Responsive adjustments */
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -455,6 +447,7 @@
 
         const startScreen = document.getElementById("start-screen");
         const quizContainer = document.getElementById("quiz-container");
+        const startButton = document.getElementById("start-button"); // Récupérer le bouton de démarrage
 
         function startQuiz() {
             currentQuestionIndex = 0;
@@ -511,58 +504,4 @@
             `;
         }
 
-        function nextQuestion() {
-            currentQuestionIndex++;
-            if (currentQuestionIndex < questions.length) {
-                showQuestion();
-            } else {
-                showResults();
-            }
-        }
-
-        function getScoreMessage(score) {
-            if (score >= 54) return "🏆 Excellent ! Vous maîtrisez parfaitement les bonnes pratiques VTC.";
-            if (score >= 48) return "🥇 Très bien ! Vous avez une bonne compréhension des standards professionnels.";
-            if (score >= 42) return "🥈 Bien ! Quelques points à revoir pour parfaire votre approche.";
-            if (score >= 36) return "🥉 Correct, mais il serait bénéfique de réviser certains aspects.";
-            return "📚 Il est recommandé de reprendre la formation pour mieux assimiler les bonnes pratiques.";
-        }
-
-        function showResults() {
-            const message = getScoreMessage(score);
-            quizContainer.innerHTML = `
-                <div class="result">
-                    <h2>🎉 Résultats</h2>
-                    <p class="score">${score}/60</p>
-                    <p class="score-message">${message}</p>
-                    <div class="link-block">
-                        <p>👉 Consultez les annales officielles :<br>
-                        <a href="https://www.artisanat.fr/nous-connaitre/vous-accompagner/examens-taxi-vtc-vmdtr" target="_blank">
-                            Accéder aux annales
-                        </a></p>
-                    </div>
-                    <button onclick="startQuiz()">Recommencer</button>
-                </div>
-            `;
-
-            // Récupérer la date et l'heure actuelles
-            const now = new Date();
-            const timestamp = now.toLocaleString('fr-FR', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-
-            // Préparer les données pour Zapier
-            const zapierData = {
-                timestamp: timestamp, // Ajout de la date et l'heure
-                score: score,
-                message: message
-            };
-
-            // Ajouter les résultats "Correct" pour chaque question individuellement
-            userAnswers.forEach((answer, index) => {
-                zapierData[`Q${index + 1}_
+        function nextQuestion()
