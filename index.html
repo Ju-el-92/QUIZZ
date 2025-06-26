@@ -488,24 +488,21 @@
                 question: current.q,
                 selected: current.options[selectedIndex],
                 correct: current.options[current.answer],
-                isCorrect: isCorrect, // Ensure this is explicitly true/false
+                isCorrect: isCorrect,
                 feedback: current.feedback
             });
 
-            // Visually mark selected answer
             const optionsButtons = quizContainer.querySelectorAll(".option");
             optionsButtons.forEach((button, i) => {
-                button.onclick = null; // Disable further clicks
+                button.onclick = null;
                 if (i === current.answer) {
                     button.classList.add("correct");
                 } else if (i === selectedIndex) {
                     button.classList.add("incorrect");
                 }
-                // Also remove hover effect after selection
-                button.style.pointerEvents = 'none'; // Makes the button unclickable and removes hover state
+                button.style.pointerEvents = 'none';
             });
 
-            // Show feedback after selection
             quizContainer.innerHTML += `
                 <div class="feedback-block">
                     <p><strong>💡 Feedback :</strong> ${current.feedback}</p>
@@ -548,57 +545,24 @@
                 </div>
             `;
 
-            // Data to send to Zapier
+            // Récupérer la date et l'heure actuelles
+            const now = new Date();
+            const timestamp = now.toLocaleString('fr-FR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            // Préparer les données pour Zapier
             const zapierData = {
+                timestamp: timestamp, // Ajout de la date et l'heure
                 score: score,
-                message: message,
-                // Convertir l'array userAnswers en chaîne JSON pour l'envoyer comme un seul champ
-                answers: JSON.stringify(userAnswers)
+                message: message
             };
 
-            // Convertir l'objet en format URL-encoded
-            // Pour chaque clé-valeur dans zapierData, on l'encode et on la joint avec '&'
-            const formBody = Object.keys(zapierData).map(key =>
-                encodeURIComponent(key) + '=' + encodeURIComponent(zapierData[key])
-            ).join('&');
-
-
-            // Webhook Zapier
-            fetch("https://hooks.zapier.com/hooks/catch/13692872/ubdr3ly/", {
-                method: "POST",
-                headers: {
-                    // C'est le changement clé pour le format URL-encoded !
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                    // Le header 'Accept' n'est pas nécessaire pour ce format, mais peut être gardé.
-                },
-                body: formBody, // Utiliser le corps formaté
-            })
-            .then(response => {
-                // Lire la réponse comme du texte car Zapier peut ne pas retourner du JSON pour ce type de requête
-                return response.text();
-            })
-            .then(text => {
-                console.log('Réponse de Zapier reçue (texte):', text);
-                try {
-                    // Tenter de parser comme JSON si possible, sinon juste logger le texte
-                    const data = JSON.parse(text);
-                    if (data.status === "success") {
-                        console.log("Zapier a bien reçu les données !");
-                    }
-                } catch (e) {
-                    console.warn('Zapier n\'a pas retourné du JSON, ou erreur de parsing. Texte:', text, 'Erreur:', e);
-                }
-            })
-            .catch(error => {
-                console.error('Erreur lors de l\'envoi des données à Zapier:', error);
-            });
-        }
-
-        // Initial launch - event listener for the start button
-        document.getElementById("start-button").addEventListener("click", startQuiz);
-
-        // Hide quizContainer initially since the start screen is visible
-        quizContainer.classList.add("hidden");
-    </script>
-</body>
-</html>
+            // Ajouter les résultats "Correct" pour chaque question individuellement
+            userAnswers.forEach((answer, index) => {
+                zapierData[`Q${index + 1}_
