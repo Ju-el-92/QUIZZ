@@ -447,7 +447,7 @@
 
         const startScreen = document.getElementById("start-screen");
         const quizContainer = document.getElementById("quiz-container");
-        const startButton = document.getElementById("start-button"); // Récupérer le bouton de démarrage
+        // const startButton = document.getElementById("start-button"); // Cette ligne a été déplacée
 
         function startQuiz() {
             currentQuestionIndex = 0;
@@ -504,4 +504,98 @@
             `;
         }
 
-        function nextQuestion()
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function getScoreMessage(score) {
+            if (score >= 54) return "🏆 Excellent ! Vous maîtrisez parfaitement les bonnes pratiques VTC.";
+            if (score >= 48) return "🥇 Très bien ! Vous avez une bonne compréhension des standards professionnels.";
+            if (score >= 42) return "🥈 Bien ! Quelques points à revoir pour parfaire votre approche.";
+            if (score >= 36) return "🥉 Correct, mais il serait bénéfique de réviser certains aspects.";
+            return "📚 Il est recommandé de reprendre la formation pour mieux assimiler les bonnes pratiques.";
+        }
+
+        function showResults() {
+            const message = getScoreMessage(score);
+            quizContainer.innerHTML = `
+                <div class="result">
+                    <h2>🎉 Résultats</h2>
+                    <p class="score">${score}/60</p>
+                    <p class="score-message">${message}</p>
+                    <div class="link-block">
+                        <p>👉 Consultez les annales officielles :<br>
+                        <a href="https://www.artisanat.fr/nous-connaitre/vous-accompagner/examens-taxi-vtc-vmdtr" target="_blank">
+                            Accéder aux annales
+                        </a></p>
+                    </div>
+                    <button onclick="startQuiz()">Recommencer</button>
+                </div>
+            `;
+
+            const now = new Date();
+            const timestamp = now.toLocaleString('fr-FR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            const zapierData = {
+                timestamp: timestamp,
+                score: score,
+                message: message
+            };
+
+            userAnswers.forEach((answer, index) => {
+                zapierData[`Q${index + 1}_Correct`] = answer.isCorrect ? 'True' : 'False';
+            });
+
+            fetch("https://hooks.zapier.com/hooks/catch/13692872/ubdr3ly/", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(zapierData),
+            })
+            .then(response => {
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    return response.json();
+                } else {
+                    return response.text().then(text => {
+                        console.warn('Zapier did not return JSON. Response:', text);
+                        return {};
+                    });
+                }
+            })
+            .then(data => {
+                console.log('Données envoyées à Zapier et réponse reçue:', data);
+                if (data.status === "success") {
+                    console.log("Zapier a bien reçu les données !");
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'envoi des données à Zapier:', error);
+            });
+        }
+
+        // Le code d'initialisation a été déplacé à l'intérieur d'un écouteur DOMContentLoaded.
+        // Cela garantit que tous les éléments HTML sont chargés et disponibles.
+        document.addEventListener("DOMContentLoaded", function() {
+            // Déclarez startButton ICI, car nous sommes sûrs que l'élément HTML existe à ce stade.
+            const startButton = document.getElementById("start-button");
+            startButton.addEventListener("click", startQuiz);
+            quizContainer.classList.add("hidden"); // Assurez-vous que le conteneur du quiz est caché au départ
+        });
+    </script>
+</body>
+</html>
