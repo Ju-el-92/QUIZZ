@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* Styles CSS inchangés */
+        /* Styles CSS */
         body {
             font-family: 'Montserrat', sans-serif;
             background: #f4f4f4;
@@ -397,7 +397,7 @@
                     "Laisser le passager monter sans interaction."
                 ],
                 answer: 0,
-                feedback: "Une salutation polie et une vérification discrète assurent un accueil rassurant et professionnel."
+                feedback: "Une salutation polie et une vérification discrète assure un accueil rassurant et professionnel."
             },
             {
                 q: "Quelle attitude adopter en cas de désaccord sur le trajet choisi par le passager ?",
@@ -448,6 +448,15 @@
         const startScreen = document.getElementById("start-screen");
         const quizContainer = document.getElementById("quiz-container");
 
+        // Fonction utilitaire pour mélanger un tableau (algorithme de Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Échange les éléments
+            }
+            return array;
+        }
+
         function startQuiz() {
             currentQuestionIndex = 0;
             score = 0;
@@ -459,13 +468,23 @@
 
         function showQuestion() {
             const current = questions[currentQuestionIndex];
+
+            // Prépare les options avec leur texte et un indicateur si c'est la bonne réponse
+            const optionsWithCorrectness = current.options.map((text, i) => ({
+                text: text,
+                isCorrectOption: (i === current.answer) // Indique si cette option est la bonne réponse
+            }));
+
+            // Mélange les options
+            const shuffledOptions = shuffleArray(optionsWithCorrectness);
+
             quizContainer.innerHTML = `
                 <div class="question-block">
                     <div class="question-title">Question ${currentQuestionIndex + 1}/${questions.length}</div>
                     <div class="question-text">${current.q}</div>
-                    ${current.options.map((opt, i) => `
-                        <button class="option" data-option-index="${i}">
-                            ${opt}
+                    ${shuffledOptions.map((opt, i) => `
+                        <button class="option" data-is-correct-option="${opt.isCorrectOption}" data-selected-text="${opt.text}">
+                            ${opt.text}
                         </button>
                     `).join("")}
                 </div>
@@ -479,7 +498,7 @@
             const optionsButtons = quizContainer.querySelectorAll(".option");
             optionsButtons.forEach(button => {
                 button.addEventListener('click', function() {
-                    selectAnswer(parseInt(this.dataset.optionIndex), this);
+                    selectAnswer(this); // Passer le bouton cliqué
                 });
             });
 
@@ -487,26 +506,28 @@
             document.getElementById("next-question-btn").addEventListener('click', nextQuestion);
         }
 
-        function selectAnswer(selectedIndex, clickedButton) {
+        function selectAnswer(clickedButton) {
             const current = questions[currentQuestionIndex];
-            const isCorrect = selectedIndex === current.answer;
+            const isCorrect = clickedButton.dataset.isCorrectOption === 'true'; // Vérifie la propriété mélangée
+
             if (isCorrect) score += 3;
             userAnswers.push({
                 question: current.q,
-                selected: current.options[selectedIndex],
-                correct: current.options[current.answer],
+                selected: clickedButton.dataset.selectedText, // Texte de l'option cliquée
+                correct: current.options[current.answer], // Texte de la bonne réponse originale
                 isCorrect: isCorrect,
                 feedback: current.feedback
             });
 
             const optionsButtons = quizContainer.querySelectorAll(".option");
             optionsButtons.forEach(button => {
-                button.removeEventListener('click', arguments.callee); // Supprime l'écouteur pour éviter plusieurs clics
+                // Supprimer tous les écouteurs pour éviter les clics multiples sur les options d'une même question
+                button.removeEventListener('click', arguments.callee); // Retire l'ancien écouteur
                 button.style.pointerEvents = 'none'; // Désactive le bouton visuellement
-                const optionIndex = parseInt(button.dataset.optionIndex);
-                if (optionIndex === current.answer) {
+
+                if (button.dataset.isCorrectOption === 'true') { // Vérifie si cette option est la bonne
                     button.classList.add("correct");
-                } else if (optionIndex === selectedIndex) {
+                } else if (button === clickedButton) { // Si c'est le bouton cliqué et qu'il est faux
                     button.classList.add("incorrect");
                 }
             });
@@ -551,7 +572,6 @@
                 </div>
             `;
 
-            // Attacher l'écouteur d'événement pour le bouton "Recommencer"
             document.getElementById("restart-quiz-btn").addEventListener('click', startQuiz);
 
             const now = new Date();
@@ -574,33 +594,25 @@
                 zapierData[`Q${index + 1}_Correct`] = answer.isCorrect ? 'True' : 'False';
             });
 
-            fetch("https://hooks.zapier.com/hooks/catch/13692872/ubdr3ly/", {
+            // *** C'EST ICI QUE L'URL DE VOTRE APPS SCRIPT EST INSÉRÉE ***
+            const appsScriptUrl = "https://script.google.com/macros/s/AKfycbwjFZcMo7OYUfFAkyTOGTAogF4-1cNskQ14oRT8F_KLFlv7GAQxm0EQFYShez5PJnzexQ/exec"; 
+
+            fetch(appsScriptUrl, {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(zapierData),
             })
-            .then(response => {
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.indexOf("application/json") !== -1) {
-                    return response.json();
-                } else {
-                    return response.text().then(text => {
-                        console.warn('Zapier did not return JSON. Response:', text);
-                        return {};
-                    });
-                }
-            })
+            .then(response => response.json())
             .then(data => {
-                console.log('Données envoyées à Zapier et réponse reçue:', data);
+                console.log('Données envoyées à Google Sheet (via Apps Script) et réponse reçue:', data);
                 if (data.status === "success") {
-                    console.log("Zapier a bien reçu les données !");
+                    console.log("Les données ont été ajoutées à Google Sheet avec succès !");
                 }
             })
             .catch(error => {
-                console.error('Erreur lors de l\'envoi des données à Zapier:', error);
+                console.error('Erreur lors de l\'envoi des données à Google Sheet:', error);
             });
         }
 
