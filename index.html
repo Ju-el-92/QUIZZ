@@ -189,6 +189,34 @@
             color: #333;
         }
 
+        /* Nouveaux styles pour la collecte d'e-mail */
+        .email-collection-block {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f8f8;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+        .email-collection-block p {
+            font-size: 1.1em;
+            color: #444;
+            margin-bottom: 15px;
+        }
+        .email-input {
+            width: calc(100% - 40px); /* Largeur du champ de saisie */
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box; /* Inclut le padding dans la largeur */
+        }
+        .email-input:focus {
+            outline: none;
+            border-color: #2A9C64;
+            box-shadow: 0 0 5px rgba(42, 156, 100, 0.5);
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -222,6 +250,10 @@
             #start-screen p {
                 font-size: 1em;
             }
+            .email-input {
+                width: calc(100% - 30px); /* Ajustement pour mobile */
+                padding: 10px;
+            }
         }
     </style>
 </head>
@@ -231,13 +263,13 @@
         <div id="start-screen">
             <h1>🎓 Quizz VTC</h1>
             <p>Ce quizz s’appuie sur les contenus des <strong>formations officielles VTC</strong>, notamment les modules 
-  <em>« Relation client et attitudes professionnelles »</em> ainsi que 
-  <em>« Réglementation spécifique à l’activité VTC »</em>.
-</p>
-<p>
-  🔶 Il permet une mise à jour rapide et concrète des connaissances clés, utiles pour maintenir une qualité de service optimale.</p>
-<p> 👉🏼 Ce quizz contient <strong>20 questions</strong>.  
-            Chaque bonne réponse vous rapporte <strong>3 points</strong>. Score maximum : <strong>60 points</strong>.</p>
+             <em>« Relation client et attitudes professionnelles »</em> ainsi que 
+             <em>« Réglementation spécifique à l’activité VTC »</em>.
+            </p>
+            <p>
+             🔶 Il permet une mise à jour rapide et concrète des connaissances clés, utiles pour maintenir une qualité de service optimale.</p>
+            <p> 👉🏼 Ce quizz contient <strong>20 questions</strong>.  
+             Chaque bonne réponse vous rapporte <strong>3 points</strong>. Score maximum : <strong>60 points</strong>.</p>
             <button id="start-button">Démarrer le Quizz</button>
         </div>
 
@@ -553,7 +585,7 @@
             if (currentQuestionIndex < questions.length) {
                 showQuestion();
             } else {
-                showResults();
+                showEmailCollectionScreen(); // Nouvelle fonction pour collecter l'e-mail avant d'envoyer
             }
         }
 
@@ -565,24 +597,46 @@
             return "📚 Il est recommandé de reprendre la formation pour mieux assimiler les bonnes pratiques.";
         }
 
-        function showResults() {
+        // Nouvelle fonction pour afficher l'écran de collecte d'email
+        function showEmailCollectionScreen() {
             const message = getScoreMessage(score);
             quizContainer.innerHTML = `
                 <div class="result">
                     <h2>🎉 Résultats</h2>
                     <p class="score">${score}/60</p>
                     <p class="score-message">${message}</p>
-                    <div class="link-block">
+
+                    <div class="email-collection-block" id="email-collection-block">
+                        <p>Merci de partager l'adresse mail relative à votre compte chauffeur.</p>
+                        <input type="email" id="email-input" placeholder="Votre adresse email (facultatif)" class="email-input">
+                        <button id="submit-email-btn">Envoyer les résultats</button>
+                    </div>
+
+                    <!-- Ces blocs seront cachés initialement et affichés après l'envoi -->
+                    <div class="link-block hidden" id="final-link-block">
                         <p>👉 Consultez les annales officielles :<br>
                         <a href="https://www.artisanat.fr/nous-connaitre/vous-accompagner/examens-taxi-vtc-vmdtr" target="_blank">
                             Accéder aux annales
                         </a></p>
                     </div>
-                    <button id="restart-quiz-btn">Recommencer</button>
+                    <button id="restart-quiz-btn" class="hidden">Recommencer</button>
                 </div>
             `;
 
-            document.getElementById("restart-quiz-btn").addEventListener('click', startQuiz);
+            // Attacher l'écouteur d'événement pour le bouton d'envoi d'email
+            document.getElementById("submit-email-btn").addEventListener('click', sendDataToAppsScript);
+        }
+
+
+        // Fonction pour envoyer les données à Apps Script et afficher l'écran final
+        function sendDataToAppsScript() {
+            const emailInput = document.getElementById("email-input");
+            const participantEmail = emailInput.value.trim(); // Récupère l'email, supprime les espaces
+
+            // Désactiver le bouton d'envoi pour éviter les soumissions multiples
+            const submitEmailBtn = document.getElementById("submit-email-btn");
+            submitEmailBtn.disabled = true;
+            submitEmailBtn.textContent = "Envoi en cours...";
 
             const now = new Date();
             const timestamp = now.toLocaleString('fr-FR', {
@@ -594,29 +648,27 @@
                 second: '2-digit'
             });
 
-            // Préparation des données à envoyer à Google Apps Script
             const dataToSend = {
                 timestamp: timestamp,
                 score: score,
-                message: message
+                message: getScoreMessage(score), // Le message est calculé ici
+                email: participantEmail // Ajout de l'adresse email
             };
 
             userAnswers.forEach((answer, index) => {
                 dataToSend[`Q${index + 1}_Correct`] = answer.isCorrect ? 'True' : 'False';
             });
 
-            // *** C'EST L'URL DE VOTRE APPLICATION GOOGLE APPS SCRIPT ***
             const appsScriptUrl = "https://script.google.com/macros/s/AKfycbwjFZcMo7OYUfFAkyTOGTAogF4-1cNskQ14oRT8F_KLFlv7GAQxm0EQFYShez5PJnzexQ/exec"; 
 
             fetch(appsScriptUrl, {
                 method: "POST",
                 headers: {
-                    // C'est le changement clé pour le format URL-encoded !
                     'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 
                 },
-                body: new URLSearchParams(dataToSend).toString(), // Convertit l'objet en chaîne URL-encoded
+                body: new URLSearchParams(dataToSend).toString(),
             })
-            .then(response => response.text()) // Lire la réponse comme du texte
+            .then(response => response.text())
             .then(text => {
                 console.log('Réponse de Google Apps Script (texte):', text);
                 try {
@@ -630,6 +682,12 @@
             })
             .catch(error => {
                 console.error('Erreur lors de l\'envoi des données à Google Sheet:', error);
+            })
+            .finally(() => {
+                // Afficher le lien vers les annales et le bouton "Recommencer" après l'envoi (réussi ou échoué)
+                document.getElementById("email-collection-block").classList.add("hidden"); // Cache le bloc email
+                document.getElementById("final-link-block").classList.remove("hidden"); // Affiche le lien
+                document.getElementById("restart-quiz-btn").classList.remove("hidden"); // Affiche le bouton recommencer
             });
         }
 
